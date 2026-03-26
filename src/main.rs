@@ -13,6 +13,12 @@ enum HealthStatus {
     Critical,
 }
 
+enum Anomaly {
+    LowBattery,
+    HighTemperature,
+    HighCpuLoad,
+}
+
 impl Telemetry {
     fn from_step(step: u32) -> Self {
         Self {
@@ -23,19 +29,37 @@ impl Telemetry {
     }
 }
 
-
 fn main() {
     let mut step = 0;
 
     loop {
         let sample = Telemetry::from_step(step);
-        let status = evaluate_status(&sample);  // What does '&' mean?
+        let anomalies = detect_anomalies(&sample);
+        let status = evaluate_status(&sample);
 
-        print_telemetry(step, &sample, &status);
+        print_telemetry(step, &sample, &status, &anomalies);
 
         step += 1;
         thread::sleep(Duration::from_secs(1));
     }
+}
+
+fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
+    let mut anomalies: Vec<Anomaly> = Vec::new();
+
+    if sample.battery_voltage < 11.5 {
+        anomalies.push(Anomaly::LowBattery);
+    }
+
+    if sample.temperature_c > 55.0 {
+        anomalies.push(Anomaly::HighTemperature);
+    }
+
+    if sample.cpu_load_percent > 85.0 {
+        anomalies.push(Anomaly::HighCpuLoad);
+    }
+
+    anomalies
 }
 
 fn evaluate_status(sample: &Telemetry) -> HealthStatus {
@@ -51,12 +75,22 @@ fn evaluate_status(sample: &Telemetry) -> HealthStatus {
     }
 }
 
-fn print_telemetry(step: u32, sample: &Telemetry, status: &HealthStatus) {
+fn print_telemetry(step: u32, sample: &Telemetry, status: &HealthStatus, anomalies: &Vec<Anomaly>) {
     println!("Satellite telemetry sample {step}");
     println!("Battery voltage: {:.1} V", sample.battery_voltage);
     println!("Temperature: {:.1} °C", sample.temperature_c);
     println!("CPU load: {:.1} %", sample.cpu_load_percent);
     println!("Health status: {}", health_status_label(status));
+
+    if anomalies.is_empty() {
+        println!("Detected anomalies: none");
+    } else {
+        println!("Detected anomalies:");
+        for anomaly in anomalies {
+            println!("- {}", anomaly_label(anomaly));
+        }
+    }
+
     println!();
 }
 
@@ -65,5 +99,13 @@ fn health_status_label(status: &HealthStatus) -> &'static str {
         HealthStatus::Nominal => "Nominal",
         HealthStatus::Warning => "Warning",
         HealthStatus::Critical => "Critical",
+    }
+}
+
+fn anomaly_label(anomaly: &Anomaly) -> &'static str {
+    match anomaly {
+        Anomaly::LowBattery => "Low battery",
+        Anomaly::HighTemperature => "High temperature",
+        Anomaly::HighCpuLoad => "High CPU load",
     }
 }
