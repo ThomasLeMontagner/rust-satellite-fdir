@@ -1,18 +1,21 @@
 use std::thread;
 use std::time::Duration;
 
+/// Represents a satellite telemetry packet.
 struct Telemetry {
     battery_voltage: f32,
     temperature_c: f32,
     cpu_load_percent: f32,
 }
 
+/// Possible health status of a satellite.
 enum HealthStatus {
     Nominal,
     Warning,
     Critical,
 }
 
+/// Possible satellite anomalies.
 enum Anomaly {
     LowBattery,
     HighTemperature,
@@ -20,6 +23,8 @@ enum Anomaly {
 }
 
 impl Telemetry {
+
+    /// Creates telemetry from a simulation step.
     fn from_step(step: u32) -> Self {
         Self {
             battery_voltage: 12.4 - (step as f32 * 0.1),
@@ -44,6 +49,7 @@ fn main() {
     }
 }
 
+/// Return anomalies in a telemetry packet.
 fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
     let mut anomalies: Vec<Anomaly> = Vec::new();
 
@@ -62,6 +68,8 @@ fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
     anomalies
 }
 
+
+/// Evaluate health status from a telemetry packet.
 fn evaluate_status(sample: &Telemetry) -> HealthStatus {
     if sample.battery_voltage < 10.5 || sample.temperature_c > 70.0 {
         HealthStatus::Critical
