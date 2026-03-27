@@ -125,6 +125,7 @@ fn print_telemetry(step: u32, sample: &Telemetry, status: &HealthStatus, anomali
     println!();
 }
 
+/// Return label corresponding to health status.
 fn health_status_label(status: &HealthStatus) -> &'static str {
     match status {
         HealthStatus::Nominal => "Nominal",
@@ -133,6 +134,7 @@ fn health_status_label(status: &HealthStatus) -> &'static str {
     }
 }
 
+/// Return label corresponding to anomalies.
 fn anomaly_label(anomaly: &Anomaly) -> &'static str {
     match anomaly {
         Anomaly::LowBattery => "Low battery",
