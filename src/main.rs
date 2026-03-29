@@ -23,6 +23,49 @@ enum SpacecraftMode {
     Safe,
 }
 
+/// Severity of teh anomalies
+enum Severity {
+    Nominal,
+    Warning,
+    Critical,
+}
+
+/// Display helpers for severity.
+impl Severity {
+    /// Returns the severity label.
+    fn label(&self) -> &'static str {
+        match self {
+            Severity::Nominal => "Nominal",
+            Severity::Warning => "Warning",
+            Severity::Critical => "Critical",
+        }
+    }
+}
+
+/// Severity decision logic for detected anomalies.
+impl Severity {
+    /// Determines the severity from detected anomalies.
+    fn from_anomalies(anomalies: &[Anomaly]) -> Self {
+        let has_low_battery = anomalies
+            .iter()
+            .any(|anomaly| matches!(anomaly, Anomaly::LowBattery));
+        let has_high_temperature = anomalies
+            .iter()
+            .any(|anomaly| matches!(anomaly, Anomaly::HighTemperature));
+        let has_high_cpu_load = anomalies
+            .iter()
+            .any(|anomaly| matches!(anomaly, Anomaly::HighCpuLoad));
+
+        if has_low_battery && has_high_temperature {
+            Self::Critical
+        } else if has_low_battery || has_high_temperature || has_high_cpu_load {
+            Self::Warning
+        } else {
+            Self::Nominal
+        }
+    }
+}
+
 impl Telemetry {
     /// Creates telemetry from a simulation step.
     fn from_step(step: u32) -> Self {
@@ -55,23 +98,11 @@ impl Telemetry {
 /// Mode decision logic for the spacecraft.
 impl SpacecraftMode {
     /// Determines the spacecraft mode from detected anomalies.
-    fn from_anomalies(anomalies: &[Anomaly]) -> Self {
-        let has_low_battery = anomalies
-            .iter()
-            .any(|anomaly| matches!(anomaly, Anomaly::LowBattery));
-        let has_high_temperature = anomalies
-            .iter()
-            .any(|anomaly| matches!(anomaly, Anomaly::HighTemperature));
-        let has_high_cpu_load = anomalies
-            .iter()
-            .any(|anomaly| matches!(anomaly, Anomaly::HighCpuLoad));
-
-        if has_low_battery && has_high_temperature {
-            Self::Safe
-        } else if has_low_battery || has_high_temperature || has_high_cpu_load {
-            Self::Degraded
-        } else {
-            Self::Nominal
+    fn from_severity(severity: &Severity) -> Self {
+        match severity {
+            Severity::Nominal => Self::Nominal,
+            Severity::Warning => Self::Degraded,
+            Severity::Critical => Self::Safe,
         }
     }
 
@@ -104,9 +135,10 @@ fn main() {
     loop {
         let sample = Telemetry::from_step(step);
         let anomalies = detect_anomalies(&sample);
-        let mode = SpacecraftMode::from_anomalies(&anomalies);
+        let severity = Severity::from_anomalies(&anomalies);
+        let mode = SpacecraftMode::from_severity(&severity);
 
-        print_telemetry(step, &sample, &anomalies, &mode);
+        print_telemetry(step, &sample, &anomalies, &severity, &mode);
         print_mode_transition(&previous_mode, &mode);
 
         previous_mode = mode;
@@ -135,11 +167,18 @@ fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
     anomalies
 }
 
-fn print_telemetry(step: u32, sample: &Telemetry, anomalies: &[Anomaly], mode: &SpacecraftMode) {
+fn print_telemetry(
+    step: u32,
+    sample: &Telemetry,
+    anomalies: &[Anomaly],
+    severity: &Severity,
+    mode: &SpacecraftMode,
+) {
     println!("Satellite telemetry sample {step}");
     println!("Battery voltage: {:.1} V", sample.battery_voltage);
     println!("Temperature: {:.1} °C", sample.temperature_c);
     println!("CPU load: {:.1} %", sample.cpu_load_percent);
+    println!("Severity: {}", severity.label());
     println!("Spacecraft mode: {}", mode.label());
 
     if anomalies.is_empty() {
