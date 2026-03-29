@@ -8,18 +8,18 @@ struct Telemetry {
     cpu_load_percent: f32,
 }
 
-/// Possible health status of a satellite.
-enum HealthStatus {
-    Nominal,
-    Warning,
-    Critical,
-}
-
 /// Possible satellite anomalies.
 enum Anomaly {
     LowBattery,
     HighTemperature,
     HighCpuLoad,
+}
+
+/// Operating modes of the satellite.
+enum SpacecraftMode {
+    Nominal,
+    Degraded,
+    Safe,
 }
 
 impl Telemetry {
@@ -33,31 +33,21 @@ impl Telemetry {
     }
 }
 
-/// Health and diagnostic.
+/// Diagnostic helpers for telemetry.
 impl Telemetry {
     /// Is the satellite overheating?
     fn is_overheating(&self) -> bool {
         self.temperature_c > 55.0
     }
 
-    /// Is the temperature critical?
-    fn is_temperature_critical(&self) -> bool {
-        self.temperature_c > 70.0
-    }
-
-    /// Is the CPU overloading?
-    fn is_cpu_overloading(&self) -> bool {
+    /// Is the CPU overloaded?
+    fn is_cpu_overloaded(&self) -> bool {
         self.cpu_load_percent > 85.0
     }
 
     /// Is the battery low?
     fn is_battery_low(&self) -> bool {
         self.battery_voltage < 11.5
-    }
-
-    /// Is the battery level critical?
-    fn is_battery_critical(&self) -> bool {
-        self.battery_voltage < 10.5
     }
 }
 
@@ -67,16 +57,16 @@ fn main() {
     loop {
         let sample = Telemetry::from_step(step);
         let anomalies = detect_anomalies(&sample);
-        let status = evaluate_status(&sample);
+        let mode = determine_mode(&anomalies);
 
-        print_telemetry(step, &sample, &status, &anomalies);
+        print_telemetry(step, &sample, &anomalies, &mode);
 
         step += 1;
         thread::sleep(Duration::from_secs(1));
     }
 }
 
-/// Return anomalies in a telemetry packet.
+/// Returns anomalies in a telemetry packet.
 fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
     let mut anomalies: Vec<Anomaly> = Vec::new();
 
@@ -88,30 +78,40 @@ fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
         anomalies.push(Anomaly::HighTemperature);
     }
 
-    if sample.is_cpu_overloading() {
+    if sample.is_cpu_overloaded() {
         anomalies.push(Anomaly::HighCpuLoad);
     }
 
     anomalies
 }
 
-/// Evaluate health status from a telemetry packet.
-fn evaluate_status(sample: &Telemetry) -> HealthStatus {
-    if sample.is_battery_critical() || sample.is_temperature_critical() {
-        HealthStatus::Critical
-    } else if sample.is_battery_low() || sample.is_overheating() || sample.is_cpu_overloading() {
-        HealthStatus::Warning
+/// Returns the mode of the satellite based on detected anomalies.
+fn determine_mode(anomalies: &[Anomaly]) -> SpacecraftMode {
+    let has_low_battery = anomalies
+        .iter()
+        .any(|anomaly| matches!(anomaly, Anomaly::LowBattery));
+    let has_high_temperature = anomalies
+        .iter()
+        .any(|anomaly| matches!(anomaly, Anomaly::HighTemperature));
+    let has_high_cpu_load = anomalies
+        .iter()
+        .any(|anomaly| matches!(anomaly, Anomaly::HighCpuLoad));
+
+    if has_low_battery && has_high_temperature {
+        SpacecraftMode::Safe
+    } else if has_low_battery || has_high_temperature || has_high_cpu_load {
+        SpacecraftMode::Degraded
     } else {
-        HealthStatus::Nominal
+        SpacecraftMode::Nominal
     }
 }
 
-fn print_telemetry(step: u32, sample: &Telemetry, status: &HealthStatus, anomalies: &Vec<Anomaly>) {
+fn print_telemetry(step: u32, sample: &Telemetry, anomalies: &[Anomaly], mode: &SpacecraftMode) {
     println!("Satellite telemetry sample {step}");
     println!("Battery voltage: {:.1} V", sample.battery_voltage);
     println!("Temperature: {:.1} °C", sample.temperature_c);
     println!("CPU load: {:.1} %", sample.cpu_load_percent);
-    println!("Health status: {}", health_status_label(status));
+    println!("Spacecraft mode: {}", spacecraft_mode_label(mode));
 
     if anomalies.is_empty() {
         println!("Detected anomalies: none");
@@ -125,20 +125,20 @@ fn print_telemetry(step: u32, sample: &Telemetry, status: &HealthStatus, anomali
     println!();
 }
 
-/// Return label corresponding to health status.
-fn health_status_label(status: &HealthStatus) -> &'static str {
-    match status {
-        HealthStatus::Nominal => "Nominal",
-        HealthStatus::Warning => "Warning",
-        HealthStatus::Critical => "Critical",
-    }
-}
-
-/// Return label corresponding to anomalies.
+/// Returns label corresponding to anomalies.
 fn anomaly_label(anomaly: &Anomaly) -> &'static str {
     match anomaly {
         Anomaly::LowBattery => "Low battery",
         Anomaly::HighTemperature => "High temperature",
         Anomaly::HighCpuLoad => "High CPU load",
+    }
+}
+
+/// Returns the label corresponding to the spacecraft mode.
+fn spacecraft_mode_label(mode: &SpacecraftMode) -> &'static str {
+    match mode {
+        SpacecraftMode::Nominal => "Nominal",
+        SpacecraftMode::Degraded => "Degraded",
+        SpacecraftMode::Safe => "Safe",
     }
 }
