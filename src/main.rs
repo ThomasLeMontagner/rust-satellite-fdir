@@ -1,21 +1,21 @@
 use std::thread;
 use std::time::Duration;
 
-/// Represents a satellite telemetry packet.
+// Represents a satellite telemetry packet.
 struct Telemetry {
     battery_voltage: f32,
     temperature_c: f32,
     cpu_load_percent: f32,
 }
 
-/// Possible satellite anomalies.
+// Possible satellite anomalies.
 enum Anomaly {
     LowBattery,
     HighTemperature,
     HighCpuLoad,
 }
 
-/// Operating modes of the satellite.
+// Operating modes of the satellite.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum SpacecraftMode {
     Nominal,
@@ -23,16 +23,16 @@ enum SpacecraftMode {
     Safe,
 }
 
-/// Severity of teh anomalies
+// Severity of teh anomalies
 enum Severity {
     Nominal,
     Warning,
     Critical,
 }
 
-/// Display helpers for severity.
+// Display helpers for severity.
 impl Severity {
-    /// Returns the severity label.
+    // Returns the severity label.
     fn label(&self) -> &'static str {
         match self {
             Severity::Nominal => "Nominal",
@@ -42,9 +42,9 @@ impl Severity {
     }
 }
 
-/// Severity decision logic for detected anomalies.
+// Severity decision logic for detected anomalies.
 impl Severity {
-    /// Determines the severity from detected anomalies.
+    // Determines the severity from detected anomalies.
     fn from_anomalies(anomalies: &[Anomaly]) -> Self {
         let has_low_battery = anomalies
             .iter()
@@ -67,7 +67,7 @@ impl Severity {
 }
 
 impl Telemetry {
-    /// Creates telemetry from a simulation step.
+    // Creates telemetry from a simulation step.
     fn from_step(step: u32) -> Self {
         Self {
             battery_voltage: 12.4 - (step as f32 * 0.1),
@@ -77,27 +77,27 @@ impl Telemetry {
     }
 }
 
-/// Diagnostic helpers for telemetry.
+// Diagnostic helpers for telemetry.
 impl Telemetry {
-    /// Is the satellite overheating?
+    // Is the satellite overheating?
     fn is_overheating(&self) -> bool {
         self.temperature_c > 55.0
     }
 
-    /// Is the CPU overloaded?
+    // Is the CPU overloaded?
     fn is_cpu_overloaded(&self) -> bool {
         self.cpu_load_percent > 85.0
     }
 
-    /// Is the battery low?
+    // Is the battery low?
     fn is_battery_low(&self) -> bool {
         self.battery_voltage < 11.5
     }
 }
 
-/// Mode decision logic for the spacecraft.
+// Mode decision logic for the spacecraft.
 impl SpacecraftMode {
-    /// Determines the spacecraft mode from detected anomalies.
+    // Determines the spacecraft mode from detected anomalies.
     fn from_severity(severity: &Severity) -> Self {
         match severity {
             Severity::Nominal => Self::Nominal,
@@ -106,7 +106,7 @@ impl SpacecraftMode {
         }
     }
 
-    /// Returns the spacecraft mode label.
+    // Returns the spacecraft mode label.
     fn label(&self) -> &'static str {
         match self {
             SpacecraftMode::Nominal => "Nominal",
@@ -116,9 +116,9 @@ impl SpacecraftMode {
     }
 }
 
-/// Display helpers for anomalies.
+// Display helpers for anomalies.
 impl Anomaly {
-    /// Returns the anomaly label.
+    // Returns the anomaly label.
     fn label(&self) -> &'static str {
         match self {
             Anomaly::LowBattery => "Low battery",
@@ -148,7 +148,7 @@ fn main() {
     }
 }
 
-/// Returns anomalies in a telemetry packet.
+// Returns anomalies in a telemetry packet.
 fn detect_anomalies(sample: &Telemetry) -> Vec<Anomaly> {
     let mut anomalies: Vec<Anomaly> = Vec::new();
 
@@ -193,7 +193,7 @@ fn print_telemetry(
     println!();
 }
 
-/// Prints the spacecraft transition mode, if any.
+// Prints the spacecraft transition mode, if any.
 fn print_mode_transition(previous_mode: &SpacecraftMode, current_mode: &SpacecraftMode) {
     if previous_mode == current_mode {
         println!("Mode transition: none")
