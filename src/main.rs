@@ -1,18 +1,13 @@
-mod modules{
-  pub mod telemetry;
+mod modules {
+    pub mod anomaly;
+    pub mod telemetry;
 }
 
 use modules::telemetry::Telemetry;
+use modules::anomaly::Anomaly;
 
 use std::thread;
 use std::time::Duration;
-
-// Possible satellite anomalies.
-enum Anomaly {
-    LowBattery,
-    HighTemperature,
-    HighCpuLoad,
-}
 
 // Operating modes of the satellite.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -82,18 +77,6 @@ impl SpacecraftMode {
             SpacecraftMode::Nominal => "Nominal",
             SpacecraftMode::Degraded => "Degraded",
             SpacecraftMode::Safe => "Safe",
-        }
-    }
-}
-
-// Display helpers for anomalies.
-impl Anomaly {
-    // Returns the anomaly label.
-    fn label(&self) -> &'static str {
-        match self {
-            Anomaly::LowBattery => "Low battery",
-            Anomaly::HighTemperature => "High temperature",
-            Anomaly::HighCpuLoad => "High CPU load",
         }
     }
 }
