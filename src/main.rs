@@ -1,44 +1,17 @@
 mod modules {
     pub mod anomaly;
+    pub mod mode;
     pub mod severity;
     pub mod telemetry;
 }
 
 use modules::anomaly::Anomaly;
+use modules::mode::SpacecraftMode;
 use modules::severity::Severity;
 use modules::telemetry::Telemetry;
 
 use std::thread;
 use std::time::Duration;
-
-// Operating modes of the satellite.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum SpacecraftMode {
-    Nominal,
-    Degraded,
-    Safe,
-}
-
-// Mode decision logic for the spacecraft.
-impl SpacecraftMode {
-    // Determines the spacecraft mode from detected anomalies.
-    fn from_severity(severity: &Severity) -> Self {
-        match severity {
-            Severity::Nominal => Self::Nominal,
-            Severity::Warning => Self::Degraded,
-            Severity::Critical => Self::Safe,
-        }
-    }
-
-    // Returns the spacecraft mode label.
-    fn label(&self) -> &'static str {
-        match self {
-            SpacecraftMode::Nominal => "Nominal",
-            SpacecraftMode::Degraded => "Degraded",
-            SpacecraftMode::Safe => "Safe",
-        }
-    }
-}
 
 fn main() {
     let mut step = 0;
