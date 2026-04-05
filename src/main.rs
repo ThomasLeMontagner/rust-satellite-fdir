@@ -4,7 +4,7 @@ mod modules {
     pub mod telemetry;
 }
 
-use crate::modules::anomaly::Anomaly;
+use modules::anomaly::Anomaly;
 use modules::severity::Severity;
 use modules::telemetry::Telemetry;
 
