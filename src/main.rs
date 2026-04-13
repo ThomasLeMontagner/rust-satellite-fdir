@@ -1,10 +1,12 @@
 mod modules {
+    pub mod actions;
     pub mod anomaly;
     pub mod mode;
     pub mod severity;
     pub mod telemetry;
 }
 
+use modules::actions::Action;
 use modules::anomaly::Anomaly;
 use modules::mode::SpacecraftMode;
 use modules::severity::Severity;
@@ -22,8 +24,9 @@ fn main() {
         let anomalies = detect_anomalies(&sample);
         let severity = Severity::from_anomalies(&anomalies);
         let mode = SpacecraftMode::from_severity(&severity);
+        let actions = determine_actions(&anomalies);
 
-        print_telemetry(step, &sample, &anomalies, &severity, &mode);
+        print_telemetry(step, &sample, &anomalies, &severity, &mode, &actions);
         print_mode_transition(&previous_mode, &mode);
 
         previous_mode = mode;
@@ -58,6 +61,7 @@ fn print_telemetry(
     anomalies: &[Anomaly],
     severity: &Severity,
     mode: &SpacecraftMode,
+    actions: &[Action],
 ) {
     println!("Satellite telemetry sample {step}");
     println!("Battery voltage: {:.1} V", sample.battery_voltage);
@@ -76,6 +80,15 @@ fn print_telemetry(
     }
 
     println!();
+    println!("Recovery actions:");
+
+    if actions.is_empty() {
+        println!("None");
+    } else {
+        for action in actions {
+            println!("- {}", action.label());
+        }
+    }
 }
 
 // Prints the spacecraft transition mode, if any.
@@ -89,4 +102,19 @@ fn print_mode_transition(previous_mode: &SpacecraftMode, current_mode: &Spacecra
             current_mode.label()
         );
     }
+}
+
+//  Determine the action to take base on anomalies
+fn determine_actions(anomalies: &[Anomaly]) -> Vec<Action> {
+    let mut actions = Vec::new();
+
+    for anomaly in anomalies {
+        match anomaly {
+            Anomaly::LowBattery => actions.push(Action::ReducePower),
+            Anomaly::HighCpuLoad => actions.push(Action::RestartSubsystem),
+            Anomaly::HighTemperature => actions.push(Action::ActivateCooling),
+        }
+    }
+
+    actions
 }
