@@ -31,6 +31,29 @@ impl AnomalyTracker {
             high_cpu_load_cycles: 0,
         }
     }
+
+    /// Updates counters based on the anomalies detected in the current cycle.
+    fn update(&mut self, anomalies: &[Anomaly]) {
+        for anomaly in anomalies {
+            self.low_battery_cycles = if anomalies.contains(&Anomaly::LowBattery) {
+                self.low_battery_cycles + 1
+            } else {
+                0
+            };
+
+            self.high_temperature_cycles = if anomalies.contains(&Anomaly::HighTemperature) {
+                self.high_temperature_cycles + 1
+            } else {
+                0
+            };
+
+            self.high_cpu_load_cycles = if anomalies.contains(&Anomaly::HighCpuLoad) {
+                self.high_cpu_load_cycles + 1
+            } else {
+                0
+            };
+        }
+    }
 }
 
 fn main() {
