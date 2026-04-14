@@ -15,6 +15,24 @@ use modules::telemetry::Telemetry;
 use std::thread;
 use std::time::Duration;
 
+/// Tracks how long anomalies persist across telemetry cycles.
+struct AnomalyTracker {
+    low_battery_cycles: u32,
+    high_temperature_cycles: u32,
+    high_cpu_load_cycles: u32,
+}
+
+impl AnomalyTracker {
+    /// Creates a new tracker with all counters set to zero.
+    fn new() -> Self {
+        Self {
+            low_battery_cycles: 0,
+            high_temperature_cycles: 0,
+            high_cpu_load_cycles: 0,
+        }
+    }
+}
+
 fn main() {
     let mut step = 0;
     let mut previous_mode = SpacecraftMode::Nominal;
