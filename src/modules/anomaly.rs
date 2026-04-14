@@ -1,4 +1,5 @@
 // Possible satellite anomalies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Anomaly {
     LowBattery,
     HighTemperature,
