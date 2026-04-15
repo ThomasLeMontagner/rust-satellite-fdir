@@ -34,40 +34,42 @@ impl AnomalyTracker {
 
     /// Updates counters based on the anomalies detected in the current cycle.
     fn update(&mut self, anomalies: &[Anomaly]) {
-        for anomaly in anomalies {
-            self.low_battery_cycles = if anomalies.contains(&Anomaly::LowBattery) {
-                self.low_battery_cycles + 1
-            } else {
-                0
-            };
+        self.low_battery_cycles = if anomalies.contains(&Anomaly::LowBattery) {
+            self.low_battery_cycles + 1
+        } else {
+            0
+        };
 
-            self.high_temperature_cycles = if anomalies.contains(&Anomaly::HighTemperature) {
-                self.high_temperature_cycles + 1
-            } else {
-                0
-            };
+        self.high_temperature_cycles = if anomalies.contains(&Anomaly::HighTemperature) {
+            self.high_temperature_cycles + 1
+        } else {
+            0
+        };
 
-            self.high_cpu_load_cycles = if anomalies.contains(&Anomaly::HighCpuLoad) {
-                self.high_cpu_load_cycles + 1
-            } else {
-                0
-            };
-        }
+        self.high_cpu_load_cycles = if anomalies.contains(&Anomaly::HighCpuLoad) {
+            self.high_cpu_load_cycles + 1
+        } else {
+            0
+        };
     }
 }
 
 fn main() {
     let mut step = 0;
     let mut previous_mode = SpacecraftMode::Nominal;
+    let mut anomaly_tracker = AnomalyTracker::new();
 
     loop {
         let sample = Telemetry::from_step(step);
         let anomalies = detect_anomalies(&sample);
+        anomaly_tracker.update(&anomalies);
+
         let severity = Severity::from_anomalies(&anomalies);
         let mode = SpacecraftMode::from_severity(&severity);
         let actions = determine_actions(&anomalies);
 
         print_telemetry(step, &sample, &anomalies, &severity, &mode, &actions);
+        print_anomaly_persistence(&anomaly_tracker);
         print_mode_transition(&previous_mode, &mode);
 
         previous_mode = mode;
@@ -158,4 +160,15 @@ fn determine_actions(anomalies: &[Anomaly]) -> Vec<Action> {
     }
 
     actions
+}
+
+/// Prints anomaly persistence counters.
+fn print_anomaly_persistence(tracker: &AnomalyTracker) {
+    println!("Anomaly persistence:");
+    println!("- Low battery: {} cycle(s)", tracker.low_battery_cycles);
+    println!(
+        "- High temperature: {} cycle(s)",
+        tracker.high_temperature_cycles
+    );
+    println!("- High CPU load: {} cycle(s)", tracker.high_cpu_load_cycles);
 }
