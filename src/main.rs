@@ -4,6 +4,7 @@ mod modules {
     pub mod mode;
     pub mod severity;
     pub mod telemetry;
+    pub mod tracker;
 }
 
 use modules::actions::Action;
@@ -11,48 +12,10 @@ use modules::anomaly::Anomaly;
 use modules::mode::SpacecraftMode;
 use modules::severity::Severity;
 use modules::telemetry::Telemetry;
+use modules::tracker::AnomalyTracker;
 
 use std::thread;
 use std::time::Duration;
-
-/// Tracks how long anomalies persist across telemetry cycles.
-struct AnomalyTracker {
-    low_battery_cycles: u32,
-    high_temperature_cycles: u32,
-    high_cpu_load_cycles: u32,
-}
-
-impl AnomalyTracker {
-    /// Creates a new tracker with all counters set to zero.
-    fn new() -> Self {
-        Self {
-            low_battery_cycles: 0,
-            high_temperature_cycles: 0,
-            high_cpu_load_cycles: 0,
-        }
-    }
-
-    /// Updates counters based on the anomalies detected in the current cycle.
-    fn update(&mut self, anomalies: &[Anomaly]) {
-        self.low_battery_cycles = if anomalies.contains(&Anomaly::LowBattery) {
-            self.low_battery_cycles + 1
-        } else {
-            0
-        };
-
-        self.high_temperature_cycles = if anomalies.contains(&Anomaly::HighTemperature) {
-            self.high_temperature_cycles + 1
-        } else {
-            0
-        };
-
-        self.high_cpu_load_cycles = if anomalies.contains(&Anomaly::HighCpuLoad) {
-            self.high_cpu_load_cycles + 1
-        } else {
-            0
-        };
-    }
-}
 
 fn main() {
     let mut step = 0;
@@ -165,10 +128,13 @@ fn determine_actions(anomalies: &[Anomaly]) -> Vec<Action> {
 /// Prints anomaly persistence counters.
 fn print_anomaly_persistence(tracker: &AnomalyTracker) {
     println!("Anomaly persistence:");
-    println!("- Low battery: {} cycle(s)", tracker.low_battery_cycles);
+    println!("- Low battery: {} cycle(s)", tracker.low_battery_cycles());
     println!(
         "- High temperature: {} cycle(s)",
-        tracker.high_temperature_cycles
+        tracker.high_temperature_cycles()
     );
-    println!("- High CPU load: {} cycle(s)", tracker.high_cpu_load_cycles);
+    println!(
+        "- High CPU load: {} cycle(s)",
+        tracker.high_cpu_load_cycles()
+    );
 }
