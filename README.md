@@ -59,12 +59,12 @@ impl Telemetry {
 * Strong type system for reliability-critical systems
 * Excellent performance for real-time applications
 * Ideal for embedded and aerospace domains
+* And most importantly, because one should never stop learning :)
 
 ## Design Principles
 
 * Separation of concerns via multiple `impl` blocks
 * Clear naming and small, focused functions
-* One-line doc comments for public APIs (Rust idiomatic style) 
 * Extensible toward trait-based FDIR systems
 
 ## Running the Project
